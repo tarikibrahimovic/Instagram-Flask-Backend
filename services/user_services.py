@@ -1,5 +1,5 @@
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from os import abort
 
 from flask import jsonify, request
@@ -19,26 +19,32 @@ from flask_mail import Mail, Message
 from flask import current_app
 
 
-def register(data):
-    if (db.session.execute(db.select(models.UserModel).where(models.UserModel.username == data["username"]))
+def register():
+    file = request.files['file']
+    email = request.form.get('email')
+    username = request.form.get('username')
+    fullname = request.form.get('fullName')
+    password = request.form.get('password')
+    print(email, username, fullname, password)
+    if (db.session.execute(db.select(models.UserModel).where(models.UserModel.username == username))
             .scalar_one_or_none()):
         abort(400, message="Username already exists.")
-
-    user_role = (db.session.execute(db.select(models.RoleModel).where(models.RoleModel.name == RoleNames.USER)).
-                 scalar_one_or_none())
-    if not user_role:
-        abort(500, message="User role not found.")
     random_number = random.randint(100000, 999999)
     user = models.UserModel(
-        username=data["username"],
-        password=pbkdf2_sha256.hash(data["password"]),
-        email=data["email"],
-        role_id=user_role.id,
+        username=username,
+        password=pbkdf2_sha256.hash(password),
+        email=email,
+        role_id=3,
         verified_at=str(random_number)
     )
+    if file:
+        result = cloudinary_upload(file)
+        image_url = result['secure_url']
+        user.picture_url = image_url
     try:
         user.save_to_db()
-        send_mail(data["email"], random_number)
+        message = f"Your verification code is {random_number}"
+        send_mail(email, message, "Verification code")
     except Exception as e:
         abort(500, message=str(e))
     return UserSchema().dump(user), 201
@@ -46,16 +52,18 @@ def register(data):
 
 def login(data):
     user = db.session.execute(db.select(models.UserModel)
-                              .where(models.UserModel.username == data["username"])).scalar_one_or_none()
+                              .where(models.UserModel.email == data["email"])).scalar_one_or_none()
     if not user:
         abort(400, message="User not found.")
     if not pbkdf2_sha256.verify(data["password"], user.password):
         abort(400, message="Invalid password.")
-    access_token = create_access_token(identity={'user_id': user.id, 'role': user.role.name.value}, fresh=True)
-    refresh_token = create_refresh_token(identity={'user_id': user.id, 'role': user.role.name.value})
-    print(user, access_token)
+    if len(user.verified_at) == 6:
+        return LoginScheme().dump({"access_token": "", "refresh_token": "", "email": user.email,
+                                   "username": user.username}), 200
+    access_token = get_tokens(user)
 
-    return LoginScheme().dump({"access_token": access_token, "refresh_token": refresh_token}), 200
+    return LoginScheme().dump({"access_token": access_token, "email": user.email,
+                               "username": user.username}), 200
 
 
 def logout():
@@ -94,29 +102,14 @@ def change_password():
 
 
 def upload():
-    file = request.files['file']
-    user_id = get_jwt_identity().get("user_id")
-    user = db.session.execute(db.select(models.UserModel).where(models.UserModel.id == user_id)).scalar_one_or_none()
-    if file:
-        # Upload the image to Cloudinary
-        result = cloudinary_upload(file)  # Use upload() from cloudinary.uploader
-        # Access the URL of the uploaded image
-        image_url = result['secure_url']
-        user.picture_url = image_url
-        try:
-            user.save_to_db()
-        except Exception as e:
-            abort(500, message=str(e))
-        return jsonify(image_url=image_url), 200
-    else:
-        return abort(500, message="No file selected")
+    return jsonify(message="Lozinka uspešno promenjena"), 200
 
 
-def send_mail(email, random_number):
-    msg_title = "poruka"
-    sender="library@gmail.com"
+def send_mail(email, body, title):
+    msg_title = title
+    sender="instagram@gmail.com"
     msg = Message(msg_title, sender=sender, recipients=[email])
-    msg.body = f"Your verification code is {random_number}"
+    msg.body = body
     current_app.extensions['mail'].send(msg)
     return jsonify(message="Mail sent successfully"), 200
 
@@ -132,6 +125,55 @@ def verify(data):
             user.save_to_db()
         except Exception as e:
             abort(500, message=str(e))
-        return jsonify(message="User successfully verified"), 200
+
+        access_token = get_tokens(user)
+
+        return LoginScheme().dump({"access_token": access_token, "email": user.email,
+                                   "username": user.username}), 200
+    else:
+        return jsonify(message="Invalid code"), 400
+
+
+def get_tokens(user):
+    expires = timedelta(days=10)
+    access_token = create_access_token(identity={'user_id': user.id, 'role': user.role.name.value},
+                                       fresh=True, expires_delta=expires)
+
+    return access_token
+
+
+def forgot_mail(data):
+    user = db.session.execute(db.select(models.UserModel)
+                                .where(models.UserModel.email == data["email"])).scalar_one_or_none()
+    if not user:
+        abort(400, message="User not found.")
+    random_number = random.randint(100000, 999999)
+    user.forgot_password_token = str(random_number)
+    try:
+        user.save_to_db()
+        send_mail(data["email"], f"Your forgot password code is {random_number}", "Forgot password")
+    except Exception as e:
+        abort(500, message=str(e))
+
+    return jsonify(email=data["email"]), 200
+
+
+def reset_password(data):
+    user = db.session.execute(db.select(models.UserModel)
+                              .where(models.UserModel.email == data["email"])).scalar_one_or_none()
+    if not user:
+        abort(400, message="User not found.")
+    if user.forgot_password_token == data["code"]:
+        user.password = pbkdf2_sha256.hash(data["password"])
+        user.forgot_password_token = None
+        try:
+            user.save_to_db()
+        except Exception as e:
+            abort(500, message=str(e))
+
+        access_token = get_tokens(user)
+
+        return LoginScheme().dump({"access_token": access_token, "email": user.email,
+                                   "username": user.username}), 200
     else:
         return jsonify(message="Invalid code"), 400

@@ -3,8 +3,9 @@ from schemas.base_schemas import PlainSchema
 
 
 class LoginScheme(Schema):
+    email = fields.String(required=True)
+    username = fields.String(required=True)
     access_token = fields.String(dump_only=True)
-    refresh_token = fields.String(dump_only=True)
 
 
 class UserRequestSchema(PlainSchema):
@@ -23,6 +24,18 @@ class RoleSchema(PlainSchema):
     name = fields.String(required=True)
 
 
+class LoginUserSchema(Schema):
+    email = fields.String(required=True)
+    password = fields.String(required=True, load_only=True)
+
+
+class RegisterSchema(Schema):
+    username = fields.String(required=True)
+    password = fields.String(required=True, load_only=True)
+    email = fields.Email(required=True)
+    role = fields.Nested(RoleSchema(), only=['name'], dump_only=True)
+
+
 class UserSchema(Schema):
     id = fields.Integer(dump_only=True)
     username = fields.String(required=True)
@@ -34,3 +47,13 @@ class UserSchema(Schema):
 class VerifySchema(Schema):
     email = fields.Email(required=True)
     code = fields.String(required=True, validate=validate.Length(min=1, max=6))
+
+
+class ForgotPasswordSchema(Schema):
+    email = fields.Email(required=True)
+    code = fields.String(required=True, validate=validate.Length(min=1, max=6))
+    password = fields.String(required=True, load_only=True)
+
+
+class ForgotPasswordRequestSchema(Schema):
+    email = fields.Email(required=True)

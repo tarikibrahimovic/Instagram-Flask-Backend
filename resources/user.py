@@ -1,7 +1,8 @@
 from flask.views import MethodView
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_smorest import Blueprint
-from schemas import UserSchema, LoginScheme, VerifySchema
+from schemas import UserSchema, LoginScheme, VerifySchema, LoginUserSchema, ForgotPasswordRequestSchema, \
+    ForgotPasswordSchema
 from flask import jsonify
 from functools import wraps
 from services import user_services
@@ -28,15 +29,15 @@ def role_required(*allowed_roles):
 @blp.route('/register')
 class User(MethodView):
     @blp.response(200, UserSchema)
-    @blp.arguments(UserSchema)
-    def post(self, data):
-        return user_services.register(data)
+    # @blp.arguments(UserSchema)
+    def post(self):
+        return user_services.register()
 
 
 @blp.route("/login")
 class Login(MethodView):
     @blp.response(200, LoginScheme)
-    @blp.arguments(UserSchema)
+    @blp.arguments(LoginUserSchema)
     def post(self, data):
         return user_services.login(data)
 
@@ -49,18 +50,30 @@ def modify_token():
 
 @blp.route('/change_password', methods=['POST'])
 @jwt_required(fresh=True)
-@role_required('librarian', 'user')
 def change_password():
     return user_services.change_password()
 
 
-@blp.route('/upload', methods=['POST'])
-@jwt_required(fresh=True)
-def upload():
-    return user_services.upload()
+# @blp.route('/upload', methods=['POST'])
+# # @jwt_required(fresh=True)
+# def upload():
+#     return user_services.upload()
 
 
 @blp.route('/verify', methods=['POST'])
 @blp.arguments(VerifySchema)
 def verify(data):
     return user_services.verify(data)
+
+
+@blp.route('/sendMail', methods=['POST'])
+@blp.arguments(ForgotPasswordRequestSchema)
+def send_mail(data):
+    return user_services.forgot_mail(data)
+
+
+@blp.route('/resetPassword', methods=['POST'])
+@blp.arguments(ForgotPasswordSchema)
+def reset_password(data):
+    return user_services.reset_password(data)
+

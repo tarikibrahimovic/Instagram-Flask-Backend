@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate, post_dump
+from marshmallow import Schema, fields, post_dump
 from datetime import datetime
 
 
