@@ -35,6 +35,7 @@ def register():
         password=pbkdf2_sha256.hash(password),
         email=email,
         role_id=3,
+        fullName=fullname,
         verified_at=str(random_number)
     )
     if file:
@@ -63,7 +64,8 @@ def login(data):
     access_token = get_tokens(user)
 
     return LoginScheme().dump({"access_token": access_token, "email": user.email,
-                               "username": user.username}), 200
+                               "username": user.username, "fullName": user.fullName,
+                               "profileImageUrl": user.picture_url, "id": str(user.id)},), 200
 
 
 def logout():
@@ -129,7 +131,8 @@ def verify(data):
         access_token = get_tokens(user)
 
         return LoginScheme().dump({"access_token": access_token, "email": user.email,
-                                   "username": user.username}), 200
+                                   "username": user.username, "fullName": user.fullName,
+                                   "profileImageUrl": user.picture_url, "id": str(user.id)}, ), 200
     else:
         return jsonify(message="Invalid code"), 400
 
@@ -177,3 +180,7 @@ def reset_password(data):
                                    "username": user.username}), 200
     else:
         return jsonify(message="Invalid code"), 400
+
+
+def get_users():
+    return UserSchema(many=True).dump(db.session.execute(db.select(models.UserModel)).scalars().all()), 200

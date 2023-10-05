@@ -77,3 +77,8 @@ def send_mail(data):
 def reset_password(data):
     return user_services.reset_password(data)
 
+
+@blp.route('/getUsers', methods=['GET'])
+@blp.response(200, UserSchema(many=True))
+def get_users():
+    return user_services.get_users()

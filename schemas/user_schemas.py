@@ -5,6 +5,9 @@ from schemas.base_schemas import PlainSchema
 class LoginScheme(Schema):
     email = fields.String(required=True)
     username = fields.String(required=True)
+    profileImageUrl = fields.String(required=True)
+    fullName = fields.String(required=True)
+    id = fields.String(required=True)
     access_token = fields.String(dump_only=True)
 
 
@@ -40,8 +43,10 @@ class UserSchema(Schema):
     id = fields.Integer(dump_only=True)
     username = fields.String(required=True)
     password = fields.String(required=True, load_only=True)
+    fullName = fields.String(required=True)
     email = fields.Email(required=True)
-    role = fields.Nested(RoleSchema(), only=['name'], dump_only=True)
+    picture_url = fields.String(required=True, dump_only=True)
+    # role = fields.Nested(RoleSchema(), only=['name'], dump_only=True)
 
 
 class VerifySchema(Schema):
