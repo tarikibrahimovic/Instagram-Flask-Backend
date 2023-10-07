@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from os import abort
 
 from flask import jsonify, request
-from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required, get_jwt
+from flask_jwt_extended import create_access_token, get_jwt_identity, get_jwt
 
 import schemas
 from cloudinary.uploader import upload as cloudinary_upload
@@ -11,11 +11,10 @@ from models.blocklist import BlockListModel as TokenBlocklist
 
 from db import db
 import models
-from enums import RoleNames
 from schemas import UserSchema, LoginScheme
 from passlib.hash import pbkdf2_sha256
 from flask_smorest import abort
-from flask_mail import Mail, Message
+from flask_mail import Message
 from flask import current_app
 
 
@@ -25,7 +24,6 @@ def register():
     username = request.form.get('username')
     fullname = request.form.get('fullName')
     password = request.form.get('password')
-    print(email, username, fullname, password)
     if (db.session.execute(db.select(models.UserModel).where(models.UserModel.username == username))
             .scalar_one_or_none()):
         abort(400, message="Username already exists.")

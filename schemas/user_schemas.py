@@ -40,7 +40,7 @@ class RegisterSchema(Schema):
 
 
 class UserSchema(Schema):
-    id = fields.Integer(dump_only=True)
+    id = fields.String(dump_only=True)
     username = fields.String(required=True)
     password = fields.String(required=True, load_only=True)
     fullName = fields.String(required=True)

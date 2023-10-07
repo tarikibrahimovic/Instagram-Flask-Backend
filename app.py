@@ -8,6 +8,8 @@ import models
 import cloudinary
 from models.blocklist import BlockListModel as TokenBlocklist
 from resources.user import blp as user_blp
+from resources.follow import blp as follow_blp
+from resources.post import blp as post_blp
 
 from dotenv import load_dotenv
 import os
@@ -82,7 +84,9 @@ def create_app():
     # api.register_blueprint(book_blp)
     # api.register_blueprint(genre_blp)
     # api.register_blueprint(bookcopy_blp)
+    api.register_blueprint(follow_blp)
     api.register_blueprint(user_blp)
+    api.register_blueprint(post_blp)
 
     return app
 
