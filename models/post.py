@@ -6,8 +6,8 @@ class PostModel(db.Model, BaseModelMixin, FunctionBaseMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     title = db.Column(db.String(80), nullable=False)
     image_url = db.Column(db.String(300), nullable=True)
-    likes = db.Column(db.Integer, default=0, nullable=False)
 
+    likes = db.relationship('LikeModel', backref=db.backref('posts', lazy=True), cascade="all, delete")
     user = db.relationship('UserModel', backref=db.backref('posts', lazy=True), cascade="all, delete")
     post_comments = db.relationship('CommentModel', backref=db.backref('posts', lazy=True), cascade="all, delete")
 

@@ -2,3 +2,4 @@ from .user_schemas import (LoginScheme, UserRequestSchema, UserPatchSchema, Role
                            VerifySchema, LoginUserSchema, ForgotPasswordRequestSchema, ForgotPasswordSchema)
 
 from .follow_schemas import CheckFollowingSchema
+from .comment_schemas import CommentSchema

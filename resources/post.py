@@ -1,8 +1,5 @@
-from flask.views import MethodView
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 from flask_smorest import Blueprint
-from flask import jsonify
-from functools import wraps
 from services import post_service
 
 
@@ -34,3 +31,15 @@ def user_posts(uid):
 @jwt_required()
 def following_posts():
     return post_service.get_following_posts()
+
+
+@blp.route('/like/<int:post_id>', methods=['POST'])
+@jwt_required()
+def like(post_id):
+    return post_service.like(post_id)
+
+
+@blp.route('/is-liked/<int:post_id>', methods=['GET'])
+@jwt_required()
+def is_liked(post_id):
+    return post_service.is_liked(post_id)
