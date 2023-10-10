@@ -10,6 +10,7 @@ class PostModel(db.Model, BaseModelMixin, FunctionBaseMixin):
     likes = db.relationship('LikeModel', backref=db.backref('posts', lazy=True), cascade="all, delete")
     user = db.relationship('UserModel', backref=db.backref('posts', lazy=True), cascade="all, delete")
     post_comments = db.relationship('CommentModel', backref=db.backref('posts', lazy=True), cascade="all, delete")
+    notifications = db.relationship('NotificationModel', backref=db.backref('posts', lazy=True), cascade="all, delete")
 
     def __init__(self, user_id, title, image_url):
         self.user_id = user_id

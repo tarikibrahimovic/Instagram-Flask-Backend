@@ -3,6 +3,7 @@ from flask_smorest import Api
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
+from flask_socketio import SocketIO
 
 import models
 import cloudinary
@@ -20,6 +21,7 @@ from db import db
 mail = Mail()
 jwt = JWTManager()
 migrate = Migrate()
+socketio = SocketIO()
 
 
 def create_app():
@@ -53,6 +55,7 @@ def create_app():
     mail.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
+    socketio.init_app(app, cors_allowed_origins="*")
 
     @jwt.needs_fresh_token_loader
     def token_not_fresh_callback(jwt_header, jwt_payload):
@@ -92,6 +95,7 @@ def create_app():
 if __name__ == "__main__":
     app = create_app()
     app.run(debug=True)
+    socketio.run(app)
 
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),

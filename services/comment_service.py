@@ -13,13 +13,13 @@ def get_comments(post_id):
     if not post:
         abort(404, message="Post not found")
     return jsonify([{
-        "commentId": comment.id,
-        "comment": comment.comment,
-        "ownerUid": comment.user.id,
-        "ownerUsername": comment.user.username,
-        "ownerImageUrl": comment.user.picture_url,
-        "timestamp": comment.created_at
-    } for comment in post.comments]), 200
+        "commentText": comment.comment,
+        "uid": str(comment.user_id),
+        "postOwnerUid": str(post.user_id),
+        "username": comment.user.username,
+        "profileImageUrl": comment.user.picture_url,
+        "timestamp": str(comment.created_at)
+    } for comment in post.comments])
 
 
 def create_comment(data):
@@ -31,11 +31,17 @@ def create_comment(data):
     comment = models.CommentModel(user_id=user_id, post_id=data['post_id'], comment=data['comment'])
     comment.save_to_db()
     return jsonify({
-        "id": comment.id,
-        "comment": comment.comment,
-        "uid": comment.user_id,
-        "postOwnerUid": post.user_id,
+        "commentText": comment.comment,
+        "uid": str(comment.user_id),
+        "postOwnerUid": str(post.user_id),
         "username": comment.user.username,
         "profileImageUrl": comment.user.picture_url,
-        "timestamp": comment.created_at
+        "timestamp": str(comment.created_at)
     }), 201
+
+# let username: String
+#     let postOwnerUid: String
+#     let profileImageUrl: String
+#     let commentText: String
+#     let tiestamp: String
+#     let uid: String
