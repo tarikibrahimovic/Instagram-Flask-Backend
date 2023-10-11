@@ -19,7 +19,7 @@ from flask import current_app
 
 
 def register():
-    file = request.files['file']
+    file = request.files.get('file')
     email = request.form.get('email')
     username = request.form.get('username')
     fullname = request.form.get('fullName')

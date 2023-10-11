@@ -3,7 +3,7 @@ from flask_smorest import Api
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
 
 import models
 import cloudinary
@@ -89,17 +89,30 @@ def create_app():
     api.register_blueprint(post_blp)
     api.register_blueprint(comment_blp)
 
-    return app
+    return app, socketio
 
 
 if __name__ == "__main__":
-    app = create_app()
-    app.run(debug=True)
-    socketio.run(app)
+    app, socketio = create_app()
+    # app.run(debug=True)
+    socketio.run(app, port=5000, debug=True)
+
 
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
     api_secret=os.getenv("CLOUDINARY_API_SECRET")
 )
+
+
+@socketio.on('connect')
+def connect():
+    print('Client connected')
+    # socketio.emit('connected_response', {'data': 'Connected!'})
+
+
+@socketio.on('clientConnected')
+def on_client_connect():
+    print('Client connected from Swift')
+    socketio.emit('clientConnectedAck', {'message': 'Acknowledged'})
 

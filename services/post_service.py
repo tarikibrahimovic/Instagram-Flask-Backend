@@ -109,10 +109,8 @@ def is_liked(post_id):
                      .scalar_one_or_none())
 
     if existing_like:
-        print("true")
         return jsonify({"didLike": True}), 200
     else:
-        print("false")
         return jsonify({"didLike": False}), 200
 
 
