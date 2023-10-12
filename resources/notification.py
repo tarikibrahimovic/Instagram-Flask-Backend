@@ -1,3 +1,4 @@
+from flask.views import MethodView
 from flask_jwt_extended import jwt_required
 from flask_smorest import Blueprint
 from services import notification_service
@@ -7,8 +8,15 @@ blp = Blueprint('Notification', __name__, description='Operations on notificatio
 
 
 @blp.route('/notifications', methods=['GET'])
-@jwt_required()
-@blp.response(200, 'Success')
-def get_notifications():
-    """Get all notifications"""
-    return notification_service.get_notifications()
+class Notifications(MethodView):
+    @jwt_required()
+    @blp.response(200, 'Success')
+    def get(self):
+        """Get all notifications"""
+        return notification_service.get_notifications()
+
+    @jwt_required()
+    @blp.response(200, 'Success')
+    def post(self):
+        """Send notifications"""
+        return notification_service.send_notifications()

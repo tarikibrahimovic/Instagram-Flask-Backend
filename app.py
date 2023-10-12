@@ -3,7 +3,7 @@ from flask_smorest import Api
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
-from flask_socketio import SocketIO, emit
+from flask_sock import Sock
 
 import models
 import cloudinary
@@ -12,6 +12,7 @@ from resources.user import blp as user_blp
 from resources.follow import blp as follow_blp
 from resources.post import blp as post_blp
 from resources.comment import blp as comment_blp
+from resources.notification import blp as notification_blp
 
 from dotenv import load_dotenv
 import os
@@ -21,7 +22,7 @@ from db import db
 mail = Mail()
 jwt = JWTManager()
 migrate = Migrate()
-socketio = SocketIO()
+sock = Sock()
 
 
 def create_app():
@@ -55,7 +56,7 @@ def create_app():
     mail.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
-    socketio.init_app(app, cors_allowed_origins="*")
+    sock.init_app(app)
 
     @jwt.needs_fresh_token_loader
     def token_not_fresh_callback(jwt_header, jwt_payload):
@@ -88,14 +89,23 @@ def create_app():
     api.register_blueprint(user_blp)
     api.register_blueprint(post_blp)
     api.register_blueprint(comment_blp)
+    api.register_blueprint(notification_blp)
 
-    return app, socketio
+    return app
 
 
 if __name__ == "__main__":
-    app, socketio = create_app()
+    app = create_app()
     # app.run(debug=True)
-    socketio.run(app, port=5000, debug=True)
+
+
+@sock.route('/echo/<int:user_id>')
+def echo(sock, user_id):
+    while True:
+        print(user_id)
+        data = sock.receive()
+        #send this to only one client
+        sock.send(data)
 
 
 cloudinary.config(
@@ -104,15 +114,4 @@ cloudinary.config(
     api_secret=os.getenv("CLOUDINARY_API_SECRET")
 )
 
-
-@socketio.on('connect')
-def connect():
-    print('Client connected')
-    # socketio.emit('connected_response', {'data': 'Connected!'})
-
-
-@socketio.on('clientConnected')
-def on_client_connect():
-    print('Client connected from Swift')
-    socketio.emit('clientConnectedAck', {'message': 'Acknowledged'})
 

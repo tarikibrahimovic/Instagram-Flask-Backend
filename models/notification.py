@@ -9,7 +9,7 @@ class NotificationModel(db.Model, BaseModelMixin, FunctionBaseMixin):
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=True)
     followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
-    post = db.relationship('PostModel', back_populates='notifications')
+    post = db.relationship('PostModel', back_populates='notifications', lazy=False)
 
     def __init__(self, type, user_id, post_id=None, followed_id=None):
         self.type = type

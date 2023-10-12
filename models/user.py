@@ -20,6 +20,7 @@ class UserModel(db.Model, BaseModelMixin, FunctionBaseMixin):
     role = db.relationship('RoleModel', backref=db.backref('users', lazy=True), cascade="all, delete")
     user_posts = db.relationship('PostModel', backref=db.backref('users', lazy=True), cascade="all, delete")
     user_comments = db.relationship('CommentModel', backref=db.backref('users', lazy=True), cascade="all, delete")
+    user_likes = db.relationship('LikeModel', backref=db.backref('users', lazy=True), cascade="all, delete")
 
     def save_to_db(self):
         super().save_to_db()
