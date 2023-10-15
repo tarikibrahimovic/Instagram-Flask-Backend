@@ -5,6 +5,7 @@ from flask import jsonify
 from os import abort
 
 from db import db
+from enums import NotificationType
 
 
 def get_comments(post_id):
@@ -29,7 +30,10 @@ def create_comment(data):
     if not post:
         abort(404, message="Post not found")
     comment = models.CommentModel(user_id=user_id, post_id=data['post_id'], comment=data['comment'])
-    comment.save_to_db()
+    notification = models.NotificationModel(user_id=user_id, post_id=data['post_id'], type=NotificationType.COMMENT)
+    db.session.add(comment)
+    db.session.add(notification)
+    db.session.commit()
     return jsonify({
         "commentText": comment.comment,
         "uid": str(comment.user_id),
@@ -38,10 +42,3 @@ def create_comment(data):
         "profileImageUrl": comment.user.picture_url,
         "timestamp": str(comment.created_at)
     }), 201
-
-# let username: String
-#     let postOwnerUid: String
-#     let profileImageUrl: String
-#     let commentText: String
-#     let tiestamp: String
-#     let uid: String

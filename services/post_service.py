@@ -1,4 +1,5 @@
 from flask_jwt_extended import get_jwt_identity
+from sqlalchemy import and_
 
 import models
 from flask import jsonify, request
@@ -6,6 +7,7 @@ from cloudinary.uploader import upload as cloudinary_upload
 from os import abort
 
 from db import db
+from enums import NotificationType
 
 
 def upload():
@@ -89,11 +91,22 @@ def like(post_id):
                      .scalar_one_or_none())
     if existing_like:
         db.session.delete(existing_like)
+
+        existing_notification = (db.session.execute(db.select(models.NotificationModel)
+                                                    .where(and_(models.NotificationModel.user_id == user_id,
+                                                                models.NotificationModel.post_id == post_id,
+                                                                models.NotificationModel.type == NotificationType.LIKE)))
+                                 .scalar_one_or_none())
+        if existing_notification:
+            db.session.delete(existing_notification)
+
         db.session.commit()
         return jsonify({"message": "Unliked."}), 200
     else:
         like = models.LikeModel(user_id=user_id, post_id=post_id)
-        like.save_to_db()
+        db.session.add(like)
+        notification = models.NotificationModel(user_id=user_id, post_id=post_id, type=NotificationType.LIKE)
+        db.session.add(notification)
         db.session.commit()
         return jsonify({"message": "Liked."}), 201
 
@@ -112,5 +125,3 @@ def is_liked(post_id):
         return jsonify({"didLike": True}), 200
     else:
         return jsonify({"didLike": False}), 200
-
-

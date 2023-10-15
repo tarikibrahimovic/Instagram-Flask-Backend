@@ -1,5 +1,5 @@
 from flask_jwt_extended import get_jwt_identity
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from sqlalchemy.orm import joinedload
 
 import models
@@ -8,31 +8,26 @@ from cloudinary.uploader import upload as cloudinary_upload
 from os import abort
 
 from db import db
-from schemas import NotificationSchema
 
 
-def get_notifications():
-    user_id = get_jwt_identity().get('user_id')
-    # notifications = db.session.execute(
-    # db.select(models.NotificationModel).where(or_(models.NotificationModel.post.user_id == user_id,
-    #                                           models.NotificationModel.followed_id == user_id
-    #                                           ))).scalars().all()
-    notifications = db.session.query(models.NotificationModel).options(
-        joinedload(models.NotificationModel.post)).filter(
-        (models.NotificationModel.post.has(user_id=user_id)) |
-        (models.NotificationModel.followed_id == user_id)
+def get_user_notifications():
+    user_id = get_jwt_identity()['user_id']
+
+    user_posts_ids = [post.id for post in models.UserModel.query.get(user_id).user_posts]
+
+    notifications = models.NotificationModel.query.filter(
+        or_(
+            models.NotificationModel.post_id.in_(user_posts_ids),
+            models.NotificationModel.followed_id == user_id
+        )
     ).all()
 
-    return NotificationSchema.dump({'postId': notifications.post_id if notifications.post_id else None,
-                                    'username': notifications.user.username,
-                                    'profileImageUrl': notifications.user.profile_image_url,
-                                    'timestamp': str(notifications.created_at),
-                                    'type': notifications.type,
-                                    'uid': notifications.user_id
-                                    }, many=True)
-
-
-
-def send_notifications():
-    user_id = get_jwt_identity()
-    return None
+    return jsonify([
+        {
+            'postId': notification.post_id,
+            'username': notification.user.username,
+            'profileImageUrl': notification.user.picture_url,
+            'timestamp': str(notification.created_at),
+            'type': str(notification.type.value),
+            'uid': notification.user_id
+        } for notification in notifications]), 200

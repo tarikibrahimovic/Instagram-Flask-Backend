@@ -19,3 +19,9 @@ def follow(followed_id):
 @jwt_required()
 def check_following(followed_id):
     return follow_service.check_following(followed_id)
+
+
+@blp.route('/approve/<int:following_id>', methods=['POST'])
+@jwt_required()
+def approve(following_id):
+    return follow_service.approve(following_id)
