@@ -13,6 +13,7 @@ from resources.follow import blp as follow_blp
 from resources.post import blp as post_blp
 from resources.comment import blp as comment_blp
 from resources.notification import blp as notification_blp
+from events import user_sockets
 
 from dotenv import load_dotenv
 import os
@@ -103,9 +104,10 @@ if __name__ == "__main__":
 def echo(sock, user_id):
     while True:
         print(user_id)
+        user_sockets.append({"user_id": user_id, "socket": sock})
+        print(user_sockets)
         data = sock.receive()
-        #send this to only one client
-        sock.send(data)
+        sock.send("message received")
 
 
 cloudinary.config(
@@ -113,5 +115,3 @@ cloudinary.config(
     api_key=os.getenv("CLOUDINARY_API_KEY"),
     api_secret=os.getenv("CLOUDINARY_API_SECRET")
 )
-
-

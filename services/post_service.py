@@ -8,6 +8,7 @@ from os import abort
 
 from db import db
 from enums import NotificationType
+from events import user_sockets
 
 
 def upload():
@@ -104,11 +105,31 @@ def like(post_id):
         return jsonify({"message": "Unliked."}), 200
     else:
         like = models.LikeModel(user_id=user_id, post_id=post_id)
+        user_socket = get_socket(post.user_id)
+        print(user_socket)
+        if user_socket is not None:
+            user_socket.send({
+                "ownerUid": post.user.id,
+                "ownerUsername": post.user.username,
+                "caption": post.title,
+                "likes": len(post.likes),
+                "postId": str(post.id),
+                "imageUrl": post.image_url,
+                "timestamp": post.created_at,
+                "ownerImageUrl": post.user.picture_url
+            })
         db.session.add(like)
         notification = models.NotificationModel(user_id=user_id, post_id=post_id, type=NotificationType.LIKE)
         db.session.add(notification)
         db.session.commit()
         return jsonify({"message": "Liked."}), 201
+
+
+def get_socket(user_id):
+    for user_socket in user_sockets:
+        if user_socket["user_id"] == user_id:
+            return user_socket["socket"]
+    return None
 
 
 def is_liked(post_id):
