@@ -20,7 +20,7 @@ class NotificationModel(db.Model, BaseModelMixin, FunctionBaseMixin):
         self.followed_id = followed_id
 
     def __repr__(self):
-        return f'[{self.id}, {self.type}, {self.user_id}, {self.post_id}, {self.followed_id}]'
+        return f'[{self.id}, {self.type.value}, {self.user_id}, {self.post_id}, {self.followed_id}]'
 
     def save_to_db(self):
         super().save_to_db()

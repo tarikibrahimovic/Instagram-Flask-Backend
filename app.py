@@ -14,6 +14,7 @@ from resources.post import blp as post_blp
 from resources.comment import blp as comment_blp
 from resources.notification import blp as notification_blp
 from events import user_sockets
+# from services.notification_service import get_user_notifications
 
 from dotenv import load_dotenv
 import os
@@ -103,11 +104,11 @@ if __name__ == "__main__":
 @sock.route('/echo/<int:user_id>')
 def echo(sock, user_id):
     while True:
-        print(user_id)
-        user_sockets.append({"user_id": user_id, "socket": sock})
-        print(user_sockets)
+        if not any(d['user_id'] == user_id for d in user_sockets):
+            user_sockets.append({"user_id": user_id, "socket": sock})
+        print(user_id, user_sockets)
         data = sock.receive()
-        sock.send("message received")
+        sock.send("Hello, " + data)
 
 
 cloudinary.config(

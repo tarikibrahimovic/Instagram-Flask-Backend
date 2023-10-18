@@ -22,12 +22,22 @@ def get_user_notifications():
         )
     ).all()
 
+    print(notifications)
+
     return jsonify([
         {
-            'postId': notification.post_id,
+            'postId': str(notification.post_id),
             'username': notification.user.username,
-            'profileImageUrl': notification.user.picture_url,
+            'profileImageUrl': notification.user.picture_url or "",
             'timestamp': str(notification.created_at),
-            'type': str(notification.type.value),
-            'uid': notification.user_id
+            'type': notification.type.value,
+            'uid': str(notification.user_id)
         } for notification in notifications]), 200
+#
+# let id = UUID()
+#     var postId: String?
+#     let username: String
+#     let profileImageUrl: String
+#     let timestamp: String
+#     let type: Int
+#     let uid: String
