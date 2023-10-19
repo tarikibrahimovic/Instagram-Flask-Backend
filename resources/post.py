@@ -43,3 +43,9 @@ def like(post_id):
 @jwt_required()
 def is_liked(post_id):
     return post_service.is_liked(post_id)
+
+
+@blp.route('/get-post/<int:post_id>', methods=['GET'])
+@jwt_required()
+def get_post(post_id):
+    return post_service.get_post(post_id)

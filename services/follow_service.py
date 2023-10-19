@@ -7,6 +7,7 @@ from sqlalchemy import and_
 
 from enums import NotificationType
 from schemas import CheckFollowingSchema
+from services.post_service import get_socket
 
 
 def follow(followed_id):
@@ -19,19 +20,24 @@ def follow(followed_id):
                           .scalar_one_or_none())
     if existing_following:
         db.session.delete(existing_following)
-
-        # existing_notification = (db.session.execute(db.select(models.NotificationModel)
-        #                                             .where(and_(models.NotificationModel.user_id == user_id,
-        #                                                         models.NotificationModel.followed_id == followed_id,
-        #                                                         models.NotificationModel.type == NotificationType.FOLLOW)))
-        #                          .scalar_one_or_none())
-        # if existing_notification:
-        #     db.session.delete(existing_notification)
         db.session.commit()
         return {"message": "Unfollowed."}, 200
     else:
         following = models.FollowingModel(user_id=user_id, following_id=followed_id)
         notification = models.NotificationModel(user_id=user_id, followed_id=followed_id, type=NotificationType.FOLLOW)
+        user_socket = get_socket(followed_id)
+        print(user_socket)
+        if user_socket is not None:
+            user_socket.send({
+                "ownerUid": user_id,
+                "ownerUsername": notification.user.username,
+                "caption": '',
+                "likes": 0,
+                "postId": 0,
+                "imageUrl": '',
+                "timestamp": notification.created_at,
+                "ownerImageUrl": notification.user.picture_url
+            })
         db.session.add(notification)
         db.session.add(following)
         db.session.commit()

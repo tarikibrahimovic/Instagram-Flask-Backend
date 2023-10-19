@@ -109,14 +109,12 @@ def like(post_id):
         print(user_socket)
         if user_socket is not None:
             user_socket.send({
-                "ownerUid": post.user.id,
-                "ownerUsername": post.user.username,
-                "caption": post.title,
-                "likes": len(post.likes),
                 "postId": str(post.id),
-                "imageUrl": post.image_url,
-                "timestamp": post.created_at,
-                "ownerImageUrl": post.user.picture_url
+                "username": like.user.username,
+                "profileImageUrl": like.user.picture_url or "",
+                "timestamp": str(like.created_at),
+                "type": NotificationType.LIKE.value,
+                "uid": str(like.user_id)
             })
         db.session.add(like)
         notification = models.NotificationModel(user_id=user_id, post_id=post_id, type=NotificationType.LIKE)
@@ -146,3 +144,19 @@ def is_liked(post_id):
         return jsonify({"didLike": True}), 200
     else:
         return jsonify({"didLike": False}), 200
+
+
+def get_post(post_id):
+    post = db.session.execute(db.select(models.PostModel).where(models.PostModel.id == post_id)).scalar_one_or_none()
+    if not post:
+        abort(400, message="Post not found.")
+    return jsonify({
+        "ownerUid": post.user.id,
+        "ownerUsername": post.user.username,
+        "caption": post.title,
+        "likes": len(post.likes),
+        "postId": str(post.id),
+        "imageUrl": post.image_url,
+        "timestamp": post.created_at,
+        "ownerImageUrl": post.user.picture_url or ""
+    }), 200

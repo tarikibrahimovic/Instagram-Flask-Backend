@@ -5,6 +5,8 @@ class LikeModel(db.Model, BaseModelMixin, FunctionBaseMixin):
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
+    user = db.relationship('UserModel', backref='user_likes', foreign_keys=[user_id])
+
     def __init__(self, post_id, user_id):
         self.post_id = post_id
         self.user_id = user_id

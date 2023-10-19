@@ -76,3 +76,9 @@ def reset_password(data):
 @blp.response(200, UserSchema(many=True))
 def get_users():
     return user_service.get_users()
+
+
+@blp.route('/getUser/<int:user_id>', methods=['GET'])
+@blp.response(200, LoginScheme)
+def get_user(user_id):
+    return user_service.get_user(user_id)
