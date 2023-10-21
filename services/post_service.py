@@ -1,3 +1,5 @@
+import json
+
 from flask_jwt_extended import get_jwt_identity
 from sqlalchemy import and_
 
@@ -106,20 +108,22 @@ def like(post_id):
     else:
         like = models.LikeModel(user_id=user_id, post_id=post_id)
         user_socket = get_socket(post.user_id)
-        print(user_socket)
+        db.session.add(like)
+        notification = models.NotificationModel(user_id=user_id, post_id=post_id, type=NotificationType.LIKE)
+        db.session.add(notification)
+        db.session.commit()
+        print(NotificationType.LIKE.value)
         if user_socket is not None:
-            user_socket.send({
+            data = {
                 "postId": str(post.id),
                 "username": like.user.username,
                 "profileImageUrl": like.user.picture_url or "",
                 "timestamp": str(like.created_at),
                 "type": NotificationType.LIKE.value,
-                "uid": str(like.user_id)
-            })
-        db.session.add(like)
-        notification = models.NotificationModel(user_id=user_id, post_id=post_id, type=NotificationType.LIKE)
-        db.session.add(notification)
-        db.session.commit()
+                "uid": str(user_id)
+            }
+
+            user_socket.send(json.dumps(data))
         return jsonify({"message": "Liked."}), 201
 
 

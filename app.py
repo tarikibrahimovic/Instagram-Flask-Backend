@@ -106,6 +106,10 @@ def echo(sock, user_id):
     while True:
         if not any(d['user_id'] == user_id for d in user_sockets):
             user_sockets.append({"user_id": user_id, "socket": sock})
+        else:
+            for user_socket in user_sockets:
+                if user_socket["user_id"] == user_id:
+                    user_socket["socket"] = sock
         print(user_id, user_sockets)
         data = sock.receive()
         sock.send("Hello, " + data)

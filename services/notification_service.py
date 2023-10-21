@@ -22,7 +22,7 @@ def get_user_notifications():
         )
     ).all()
 
-    print(notifications)
+    print(notifications[0].type.value)
 
     return jsonify([
         {
