@@ -1,3 +1,5 @@
+import json
+
 from flask_jwt_extended import get_jwt_identity
 
 import models
@@ -37,15 +39,17 @@ def create_comment(data):
         db.session.add(notification)
         db.session.commit()
         user_socket = user_sockets.get(post.user_id)
+        comment.created_at.strftime("%Y-%m-%d %H:%M:%S")
         if user_socket:
-            user_socket.emit('comment', {
+            data = {
                 "commentText": comment.comment,
                 "uid": str(comment.user_id),
                 "postOwnerUid": str(post.user_id),
                 "username": comment.user.username,
                 "profileImageUrl": comment.user.picture_url,
                 "timestamp": str(comment.created_at)
-            })
+            }
+            user_socket.send(json.dumps(data))
     except Exception as e:
         abort(500, message=str(e))
     return jsonify({

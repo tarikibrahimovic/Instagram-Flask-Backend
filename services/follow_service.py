@@ -1,3 +1,5 @@
+import json
+
 from flask_jwt_extended import get_jwt_identity
 
 import models
@@ -25,22 +27,22 @@ def follow(followed_id):
     else:
         following = models.FollowingModel(user_id=user_id, following_id=followed_id)
         notification = models.NotificationModel(user_id=user_id, followed_id=followed_id, type=NotificationType.FOLLOW)
-        user_socket = get_socket(followed_id)
-        print(user_socket)
-        if user_socket is not None:
-            user_socket.send({
-                "ownerUid": user_id,
-                "ownerUsername": notification.user.username,
-                "caption": '',
-                "likes": 0,
-                "postId": 0,
-                "imageUrl": '',
-                "timestamp": notification.created_at,
-                "ownerImageUrl": notification.user.picture_url
-            })
         db.session.add(notification)
         db.session.add(following)
         db.session.commit()
+        user_socket = get_socket(followed_id)
+        print(user_socket)
+        following.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        if user_socket is not None:
+            data = {
+                "uid": str(user_id),
+                "username": following.user.username,
+                "profileImageUrl": following.user.picture_url or "",
+                "timestamp": str(following.created_at),
+                "type": NotificationType.FOLLOW.value,
+                "postId": 0
+            }
+            user_socket.send(json.dumps(data))
         return {"message": "Followed."}, 201
 
 

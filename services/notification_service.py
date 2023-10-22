@@ -22,7 +22,7 @@ def get_user_notifications():
         )
     ).all()
 
-    print(notifications[0].type.value)
+    notifications.created_at.strftime("%Y-%m-%d")
 
     return jsonify([
         {

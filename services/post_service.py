@@ -107,12 +107,13 @@ def like(post_id):
         return jsonify({"message": "Unliked."}), 200
     else:
         like = models.LikeModel(user_id=user_id, post_id=post_id)
-        user_socket = get_socket(post.user_id)
         db.session.add(like)
         notification = models.NotificationModel(user_id=user_id, post_id=post_id, type=NotificationType.LIKE)
         db.session.add(notification)
         db.session.commit()
-        print(NotificationType.LIKE.value)
+        user_socket = get_socket(post.user_id)
+        # only show the year mount and day
+        like.created_at.strftime("%Y-%m-%d %H:%M:%S")
         if user_socket is not None:
             data = {
                 "postId": str(post.id),
