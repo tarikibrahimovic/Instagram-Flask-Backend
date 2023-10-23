@@ -82,3 +82,9 @@ def get_users():
 @blp.response(200, LoginScheme)
 def get_user(user_id):
     return user_service.get_user(user_id)
+
+
+@blp.route('/getUserStats/<int:user_id>', methods=['GET'])
+@blp.response(200, UserSchema)
+def get_user_stats(user_id):
+    return user_service.get_user_stats(user_id)

@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from flask_jwt_extended import get_jwt_identity
 
@@ -22,7 +23,7 @@ def get_comments(post_id):
         "postOwnerUid": str(post.user_id),
         "username": comment.user.username,
         "profileImageUrl": comment.user.picture_url,
-        "timestamp": str(comment.created_at)
+        "timestamp": str(format_date(comment.created_at))
     } for comment in post.comments])
 
 
@@ -39,7 +40,6 @@ def create_comment(data):
         db.session.add(notification)
         db.session.commit()
         user_socket = user_sockets.get(post.user_id)
-        comment.created_at.strftime("%Y-%m-%d %H:%M:%S")
         if user_socket:
             data = {
                 "commentText": comment.comment,
@@ -47,7 +47,7 @@ def create_comment(data):
                 "postOwnerUid": str(post.user_id),
                 "username": comment.user.username,
                 "profileImageUrl": comment.user.picture_url,
-                "timestamp": str(comment.created_at)
+                "timestamp": str(format_date(comment.created_at))
             }
             user_socket.send(json.dumps(data))
     except Exception as e:
@@ -58,5 +58,24 @@ def create_comment(data):
         "postOwnerUid": str(post.user_id),
         "username": comment.user.username,
         "profileImageUrl": comment.user.picture_url,
-        "timestamp": str(comment.created_at)
+        "timestamp": str(format_date(comment.created_at))
     }), 201
+
+
+def format_date(date):
+    now = datetime.now()
+    diff = now - date
+
+    seconds_in_day = 60 * 60 * 24
+    seconds_in_week = seconds_in_day * 7
+    seconds_in_month = seconds_in_day * 30
+
+    if diff.total_seconds() < seconds_in_week:
+        days = diff.days
+        return f"{days} day{'s' if days != 1 else ''} ago"
+    elif diff.total_seconds() < seconds_in_month:
+        weeks = diff.days // 7
+        return f"{weeks} week{'s' if weeks != 1 else ''} ago"
+    else:
+        months = diff.days // 30
+        return f"{months} month{'s' if months != 1 else ''} ago"

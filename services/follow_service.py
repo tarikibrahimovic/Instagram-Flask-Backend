@@ -10,6 +10,7 @@ from sqlalchemy import and_
 from enums import NotificationType
 from schemas import CheckFollowingSchema
 from services.post_service import get_socket
+from services.comment_service import format_date
 
 
 def follow(followed_id):
@@ -31,14 +32,12 @@ def follow(followed_id):
         db.session.add(following)
         db.session.commit()
         user_socket = get_socket(followed_id)
-        print(user_socket)
-        following.created_at.strftime("%Y-%m-%d %H:%M:%S")
         if user_socket is not None:
             data = {
                 "uid": str(user_id),
                 "username": following.user.username,
                 "profileImageUrl": following.user.picture_url or "",
-                "timestamp": str(following.created_at),
+                "timestamp": str(format_date(following.created_at)),
                 "type": NotificationType.FOLLOW.value,
                 "postId": 0
             }

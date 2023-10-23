@@ -11,6 +11,7 @@ from os import abort
 from db import db
 from enums import NotificationType
 from events import user_sockets
+from services.comment_service import format_date
 
 
 def upload():
@@ -38,7 +39,7 @@ def get_all_posts():
         "likes": len(post.likes),
         "postId": str(post.id),
         "imageUrl": post.image_url,
-        "timestamp": post.created_at,
+        "timestamp": str(format_date(post.created_at)),
         "ownerImageUrl": post.user.picture_url
     } for post in posts]), 200
 
@@ -59,7 +60,7 @@ def get_following_posts():
         "likes": len(post.likes),
         "imageUrl": post.image_url,
         "postId": str(post.id),
-        "timestamp": post.created_at,
+        "timestamp": str(format_date(post.created_at)),
         "ownerImageUrl": post.user.picture_url
     } for post in posts]), 200
 
@@ -78,7 +79,7 @@ def get_user_posts(uid):
         "likes": len(post.likes),
         "postId": str(post.id),
         "imageUrl": post.image_url,
-        "timestamp": post.created_at,
+        "timestamp": str(format_date(post.created_at)),
         "ownerImageUrl": post.user.picture_url
     } for post in posts]), 200
 
@@ -112,14 +113,12 @@ def like(post_id):
         db.session.add(notification)
         db.session.commit()
         user_socket = get_socket(post.user_id)
-        # only show the year mount and day
-        like.created_at.strftime("%Y-%m-%d %H:%M:%S")
         if user_socket is not None:
             data = {
                 "postId": str(post.id),
                 "username": like.user.username,
                 "profileImageUrl": like.user.picture_url or "",
-                "timestamp": str(like.created_at),
+                "timestamp": str(format_date(like.created_at)),
                 "type": NotificationType.LIKE.value,
                 "uid": str(user_id)
             }
@@ -162,6 +161,6 @@ def get_post(post_id):
         "likes": len(post.likes),
         "postId": str(post.id),
         "imageUrl": post.image_url,
-        "timestamp": post.created_at,
+        "timestamp": str(format_date(post.created_at)),
         "ownerImageUrl": post.user.picture_url or ""
     }), 200

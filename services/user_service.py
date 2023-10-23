@@ -193,3 +193,16 @@ def get_user(user_id):
                                "username": user.username, "fullName": user.fullName,
                                "profileImageUrl": user.picture_url, "id": str(user.id)},), 200
 
+
+def get_user_stats(user_id):
+    user = db.session.execute(db.select(models.UserModel).where(models.UserModel.id == user_id)).scalar_one_or_none()
+    followers = db.session.execute(db.select(models.FollowingModel).where(models.FollowingModel.following_id == user_id)).scalars().all()
+    following = db.session.execute(db.select(models.FollowingModel).where(models.FollowingModel.user_id == user_id)).scalars().all()
+    if not user:
+        abort(400, message="User not found.")
+    return jsonify({
+        "followers": len(followers),
+        "following": len(following),
+        "posts": len(user.posts)
+    }), 200
+

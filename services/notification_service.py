@@ -6,6 +6,7 @@ import models
 from flask import jsonify, request
 from cloudinary.uploader import upload as cloudinary_upload
 from os import abort
+from services.comment_service import format_date
 
 from db import db
 
@@ -21,23 +22,16 @@ def get_user_notifications():
             models.NotificationModel.followed_id == user_id
         )
     ).all()
-
-    notifications.created_at.strftime("%Y-%m-%d")
+    # sort notifications ascending by created_at
+    notifications.sort(key=lambda x: x.created_at, reverse=True)
 
     return jsonify([
         {
             'postId': str(notification.post_id),
             'username': notification.user.username,
             'profileImageUrl': notification.user.picture_url or "",
-            'timestamp': str(notification.created_at),
+            'timestamp': str(format_date(notification.created_at)),
             'type': notification.type.value,
             'uid': str(notification.user_id)
         } for notification in notifications]), 200
 #
-# let id = UUID()
-#     var postId: String?
-#     let username: String
-#     let profileImageUrl: String
-#     let timestamp: String
-#     let type: Int
-#     let uid: String
