@@ -188,7 +188,6 @@ def get_user(user_id):
     user = db.session.execute(db.select(models.UserModel).where(models.UserModel.id == user_id)).scalar_one_or_none()
     if not user:
         abort(400, message="User not found.")
-    # return UserSchema().dump(user), 200
     return LoginScheme().dump({"access_token": "", "email": user.email,
                                "username": user.username, "fullName": user.fullName,
                                "profileImageUrl": user.picture_url, "id": str(user.id)},), 200
