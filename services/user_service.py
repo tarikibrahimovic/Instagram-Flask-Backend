@@ -63,7 +63,7 @@ def login(data):
 
     return LoginScheme().dump({"access_token": access_token, "email": user.email,
                                "username": user.username, "fullName": user.fullName,
-                               "profileImageUrl": user.picture_url, "id": str(user.id)},), 200
+                               "profileImageUrl": user.picture_url, "id": str(user.id), "bio": user.user_bio}), 200
 
 
 def logout():
@@ -130,7 +130,7 @@ def verify(data):
 
         return LoginScheme().dump({"access_token": access_token, "email": user.email,
                                    "username": user.username, "fullName": user.fullName,
-                                   "profileImageUrl": user.picture_url, "id": str(user.id)}, ), 200
+                                   "profileImageUrl": user.picture_url, "id": str(user.id), "bio": user.user_bio}), 200
     else:
         return jsonify(message="Invalid code"), 400
 
@@ -204,4 +204,38 @@ def get_user_stats(user_id):
         "following": len(following),
         "posts": len(user.posts)
     }), 200
+
+
+def update_user():
+    user_id = get_jwt_identity()['user_id']
+    user = db.session.execute(db.select(models.UserModel).where(models.UserModel.id == user_id)).scalar_one_or_none()
+    if not user:
+        abort(400, message="User not found.")
+    file = request.files.get('file')
+    username = request.form.get('username')
+    fullname = request.form.get('fullName')
+    user_bio = request.form.get('userBio')
+    print(file)
+    if (db.session.execute(db.select(models.UserModel).where(models.UserModel.username == username))
+            .scalar_one_or_none()):
+        abort(400, message="Username already exists.")
+    if file is not None:
+        try:
+            result = cloudinary_upload(file)
+            image_url = result['secure_url']
+            user.picture_url = image_url
+        except Exception as e:
+            abort(500, message=str(e))
+    if username:
+        user.username = username
+    if fullname:
+        user.fullName = fullname
+    if user_bio:
+        user.user_bio = user_bio
+    try:
+        db.session.commit()
+    except Exception as e:
+        abort(500, message=str(e))
+
+    return UserSchema().dump(user), 201
 

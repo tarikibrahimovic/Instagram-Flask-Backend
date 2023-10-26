@@ -88,3 +88,9 @@ def get_user(user_id):
 @blp.response(200, UserSchema)
 def get_user_stats(user_id):
     return user_service.get_user_stats(user_id)
+
+
+@blp.route('/update-user', methods=['PATCH'])
+@jwt_required()
+def update_user():
+    return user_service.update_user()

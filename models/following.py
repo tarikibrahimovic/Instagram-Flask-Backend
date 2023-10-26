@@ -8,6 +8,9 @@ class FollowingModel(db.Model, BaseModelMixin, FunctionBaseMixin):
     following_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     approved = db.Column(db.Boolean, default=False, server_default=text("false"), nullable=False)
 
+    user = db.relationship('UserModel', backref='user_followers', foreign_keys=[user_id])
+    following = db.relationship('UserModel', backref='following_users', foreign_keys=[following_id])
+
     def __init__(self, user_id, following_id, approved=False):
         self.user_id = user_id
         self.following_id = following_id

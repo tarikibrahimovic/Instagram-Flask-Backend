@@ -25,3 +25,15 @@ def check_following(followed_id):
 @jwt_required()
 def approve(following_id):
     return follow_service.approve(following_id)
+
+
+@blp.route('/get-followers', methods=['GET'])
+@jwt_required()
+def get_followers():
+    return follow_service.get_followers()
+
+
+@blp.route('/get-following', methods=['GET'])
+@jwt_required()
+def get_following():
+    return follow_service.get_following()

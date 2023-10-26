@@ -16,10 +16,13 @@ class UserModel(db.Model, BaseModelMixin, FunctionBaseMixin):
     picture_url = db.Column(db.String(300), nullable=True)
     fullName = db.Column(db.String(80), nullable=True)
     forgot_password_token = db.Column(db.String(300), nullable=True)
+    user_bio = db.Column(db.String(300), nullable=True)
 
     role = db.relationship('RoleModel', backref=db.backref('users', lazy=True), cascade="all, delete")
     user_posts = db.relationship('PostModel', backref=db.backref('users', lazy=True), cascade="all, delete")
     user_comments = db.relationship('CommentModel', backref=db.backref('users', lazy=True), cascade="all, delete")
+    followers = db.relationship('FollowingModel', backref='follower_users', foreign_keys='FollowingModel.user_id')
+    following = db.relationship('FollowingModel', backref='following_users', foreign_keys='FollowingModel.following_id')
     # user_likes = db.relationship('LikeModel', backref=db.backref('users', lazy=True), cascade="all, delete")
     # notifications = db.relationship('NotificationModel', backref=db.backref('users', lazy=True), cascade="all, delete")
 

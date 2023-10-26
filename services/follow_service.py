@@ -1,5 +1,6 @@
 import json
 
+from flask import jsonify
 from flask_jwt_extended import get_jwt_identity
 
 import models
@@ -71,3 +72,30 @@ def approve(following_id):
         return {"message": "Approved."}, 200
     else:
         abort(400, message="You can't approve yourself.")
+
+
+def get_followers():
+    user_id = get_jwt_identity()['user_id']
+    followers = db.session.execute(db.select(models.FollowingModel)
+                                   .where(models.FollowingModel.following_id == user_id)).scalars().all()
+    return jsonify([{
+        "id": str(follower.user_id),
+        "email": follower.user.email,
+        "username": follower.user.username,
+        "pictureUrl": follower.user.picture_url or "",
+        "isApproved": follower.approved
+    } for follower in followers]), 200
+
+
+def get_following():
+    user_id = get_jwt_identity()['user_id']
+    following = db.session.execute(db.select(models.FollowingModel)
+                                   .where(models.FollowingModel.user_id == user_id)).scalars().all()
+    return jsonify([{
+        "id": str(following_user.following_id),
+        "email": following_user.following.email,
+        "username": following_user.following.username,
+        "picture_url": following_user.following.picture_url or "",
+        "fullName": following_user.following.fullName,
+        "isApproved": following_user.approved
+    } for following_user in following]), 200

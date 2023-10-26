@@ -39,9 +39,9 @@ def create_app():
     db.init_app(app)
 
     # IF YOU WANT TO ADD A MIGRATION INVOLVING ROLES OR USERS PLEASE FIRST COMMENT OUT THE FOLLOWING THREE LINES
-    with app.app_context():
-        models.RoleModel.seed_roles()
-        models.UserModel().seed_admin()
+    # with app.app_context():
+    #     models.RoleModel.seed_roles()
+    #     models.UserModel().seed_admin()
 
     app.config['API_TITLE'] = os.getenv('API_TITLE')
     app.config['API_VERSION'] = os.getenv('API_VERSION')
