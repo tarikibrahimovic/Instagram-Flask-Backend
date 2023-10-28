@@ -5,6 +5,8 @@ from schemas import UserSchema, LoginScheme, VerifySchema, LoginUserSchema, Forg
     ForgotPasswordSchema
 from flask import jsonify
 from functools import wraps
+
+from schemas.user_schemas import LoginGoogleSchema
 from services import user_service
 
 blp = Blueprint('Users', __name__, description='Operations on users')
@@ -94,3 +96,10 @@ def get_user_stats(user_id):
 @jwt_required()
 def update_user():
     return user_service.update_user()
+
+
+@blp.route('/google-login', methods=['POST'])
+@blp.response(200, LoginScheme)
+@blp.arguments(LoginGoogleSchema)
+def google_login(data):
+    return user_service.google_login(data)

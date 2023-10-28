@@ -239,3 +239,27 @@ def update_user():
 
     return UserSchema().dump(user), 201
 
+
+def google_login(data):
+    user = db.session.execute(db.select(models.UserModel)
+                              .where(models.UserModel.email == data["email"])).scalar_one_or_none()
+    if not user:
+        user = models.UserModel(
+            username=data["username"],
+            email=data["email"],
+            role_id=3,
+            fullName=data["fullName"],
+            verified_at=str(datetime.utcnow()),
+            password=pbkdf2_sha256.hash(data["password"]),
+            picture_url=data["imageURL"]
+        )
+        try:
+            user.save_to_db()
+        except Exception as e:
+            abort(500, message=str(e))
+
+    access_token = get_tokens(user)
+
+    return LoginScheme().dump({"access_token": access_token, "email": user.email,
+                               "username": user.username, "fullName": user.fullName,
+                               "profileImageUrl": user.picture_url, "id": str(user.id), "bio": user.user_bio}), 200

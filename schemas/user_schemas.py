@@ -63,3 +63,11 @@ class ForgotPasswordSchema(Schema):
 
 class ForgotPasswordRequestSchema(Schema):
     email = fields.Email(required=True)
+
+
+class LoginGoogleSchema(Schema):
+    email = fields.Email(required=True)
+    username = fields.String(required=True)
+    password = fields.String(required=True, load_only=True)
+    fullName = fields.String(required=True)
+    imageURL = fields.URL(required=True)
