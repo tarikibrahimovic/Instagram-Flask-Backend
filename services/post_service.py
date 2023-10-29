@@ -17,28 +17,38 @@ from services.comment_service import format_date
 def upload():
     user_id = get_jwt_identity()['user_id']
     title = request.form.get('caption')
-    file = request.files['file']
-    if file:
-        result = cloudinary_upload(file)
-        image_url = result['secure_url']
+    files = request.files.getlist('file')
+    if files is None or len(files) == 0:
+        abort(400, message="No files.")
     try:
-        post = models.PostModel(user_id=user_id, title=title, image_url=image_url)
+        post = models.PostModel(user_id=user_id, title=title)
         post.save_to_db()
+        for file in files:
+            result = cloudinary_upload(file)
+            image_url = result['secure_url']
+            image = models.ImagesModel(post_id=post.id, image_url=image_url)
+            db.session.add(image)
+        db.session.commit()
     except Exception as e:
         abort(500, message=str(e))
+    # files = request.files.getlist('file')
+    # print(request.form.get('caption'))
+    # print(request.files.getlist('file'))
+    # print(request.files.get('file'))
+    # for file in files:
+    #     print(file)
     return jsonify({"message": "Post created."}), 201
 
 
 def get_all_posts():
     posts = db.session.execute(db.select(models.PostModel).order_by(models.PostModel.created_at.desc())).scalars().all()
-
     return jsonify([{
         "ownerUid": post.user.id,
         "ownerUsername": post.user.username,
         "caption": post.title,
         "likes": len(post.likes),
         "postId": str(post.id),
-        "imageUrl": post.image_url,
+        "imagesUrl": [image.image_url for image in post.images],
         "timestamp": str(format_date(post.created_at)),
         "ownerImageUrl": post.user.picture_url
     } for post in posts]), 200
@@ -58,7 +68,7 @@ def get_following_posts():
         "ownerUsername": post.user.username,
         "caption": post.title,
         "likes": len(post.likes),
-        "imageUrl": post.image_url,
+        "imagesUrl": [image.image_url for image in post.images],
         "postId": str(post.id),
         "timestamp": str(format_date(post.created_at)),
         "ownerImageUrl": post.user.picture_url
@@ -78,7 +88,7 @@ def get_user_posts(uid):
         "caption": post.title,
         "likes": len(post.likes),
         "postId": str(post.id),
-        "imageUrl": post.image_url,
+        "imagesUrl": [image.image_url for image in post.images],
         "timestamp": str(format_date(post.created_at)),
         "ownerImageUrl": post.user.picture_url
     } for post in posts]), 200
@@ -160,7 +170,7 @@ def get_post(post_id):
         "caption": post.title,
         "likes": len(post.likes),
         "postId": str(post.id),
-        "imageUrl": post.image_url,
+        "imagesUrl": [image.image_url for image in post.images],
         "timestamp": str(format_date(post.created_at)),
         "ownerImageUrl": post.user.picture_url or ""
     }), 200
