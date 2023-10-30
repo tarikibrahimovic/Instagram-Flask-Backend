@@ -22,7 +22,7 @@ def get_user_notifications():
             models.NotificationModel.followed_id == user_id
         )
     ).all()
-    # sort notifications ascending by created_at
+
     notifications.sort(key=lambda x: x.created_at, reverse=True)
 
     return jsonify([

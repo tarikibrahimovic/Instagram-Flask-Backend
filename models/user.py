@@ -17,6 +17,7 @@ class UserModel(db.Model, BaseModelMixin, FunctionBaseMixin):
     fullName = db.Column(db.String(80), nullable=True)
     forgot_password_token = db.Column(db.String(300), nullable=True)
     user_bio = db.Column(db.String(300), nullable=True)
+    is_private = db.Column(db.Boolean, nullable=False, server_default='0')
 
     role = db.relationship('RoleModel', backref=db.backref('users', lazy=True), cascade="all, delete")
     user_posts = db.relationship('PostModel', backref=db.backref('users', lazy=True), cascade="all, delete")

@@ -23,12 +23,26 @@ def follow(followed_id):
                                                          models.FollowingModel.following_id == followed_id)))
                           .scalar_one_or_none())
     if existing_following:
+        notification = (db.session.execute(db.select(models.NotificationModel)
+                                             .where(and_(models.NotificationModel.user_id == user_id,
+                                                            models.NotificationModel.followed_id == followed_id)))
+                            .scalar_one_or_none())
+        if notification:
+            db.session.delete(notification)
         db.session.delete(existing_following)
         db.session.commit()
-        return {"message": "Unfollowed."}, 200
+        return {"message": "False"}, 200
     else:
-        following = models.FollowingModel(user_id=user_id, following_id=followed_id)
-        notification = models.NotificationModel(user_id=user_id, followed_id=followed_id, type=NotificationType.FOLLOW)
+        user = (db.session.execute(db.select(models.UserModel).where(models.UserModel.id == followed_id))
+                .scalar_one_or_none())
+        is_approved = False
+        if not user.is_private:
+            is_approved = True
+        following = models.FollowingModel(user_id=user_id, following_id=followed_id, approved=is_approved)
+        notification = models.NotificationModel(
+            user_id=user_id, followed_id=followed_id,
+            type=is_approved and NotificationType.FOLLOW or NotificationType.APPROVE)
+
         db.session.add(notification)
         db.session.add(following)
         db.session.commit()
@@ -39,25 +53,29 @@ def follow(followed_id):
                 "username": following.user.username,
                 "profileImageUrl": following.user.picture_url or "",
                 "timestamp": str(format_date(following.created_at)),
-                "type": NotificationType.FOLLOW.value,
-                "postId": 0
+                "type": is_approved and NotificationType.FOLLOW.value or NotificationType.APPROVE.value,
+                "postId": None
             }
             user_socket.send(json.dumps(data))
-        return {"message": "Followed."}, 201
+        return {"message": is_approved and str("FOLLOW") or str("APPROVE")}, 201
 
 
 def check_following(following_id):
     user_id = get_jwt_identity()['user_id']
     if user_id == following_id:
-        abort(400, message="You can't follow yourself.")
+        print("FOLLOW")
+        return CheckFollowingSchema().dump({"is_following": "FOLLOW"}), 200
     existing_following = (db.session.execute(db.select(models.FollowingModel)
                                              .where(and_(models.FollowingModel.user_id == user_id,
                                                          models.FollowingModel.following_id == following_id)))
                           .scalar_one_or_none())
     if existing_following:
-        return CheckFollowingSchema().dump({"is_following": True}), 200
+        if existing_following.approved:
+            return CheckFollowingSchema().dump({"is_following": "FOLLOW"}), 200
+        else:
+            return CheckFollowingSchema().dump({"is_following": "APPROVE"}), 200
     else:
-        return CheckFollowingSchema().dump({"is_following": False}), 200
+        return CheckFollowingSchema().dump({"is_following": "False"}), 200
 
 
 def approve(following_id):
@@ -68,8 +86,15 @@ def approve(following_id):
                           .scalar_one_or_none())
     if existing_following:
         existing_following.approved = True
+        notification = (db.session.execute(db.select(models.NotificationModel)
+                                           .where(and_(models.NotificationModel.user_id == following_id,
+                                                       models.NotificationModel.followed_id == user_id,
+                                                       models.NotificationModel.type == NotificationType.APPROVE)))
+                        .scalar_one_or_none())
+        print(notification)
+        notification.type = NotificationType.FOLLOW
         db.session.commit()
-        return {"message": "Approved."}, 200
+        return {"is_approved": True}, 200
     else:
         abort(400, message="You can't approve yourself.")
 

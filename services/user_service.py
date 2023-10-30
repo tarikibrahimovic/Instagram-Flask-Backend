@@ -4,6 +4,7 @@ from os import abort
 
 from flask import jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt_identity, get_jwt
+from sqlalchemy import and_
 
 import schemas
 from cloudinary.uploader import upload as cloudinary_upload
@@ -63,7 +64,8 @@ def login(data):
 
     return LoginScheme().dump({"access_token": access_token, "email": user.email,
                                "username": user.username, "fullName": user.fullName,
-                               "profileImageUrl": user.picture_url, "id": str(user.id), "bio": user.user_bio}), 200
+                               "profileImageUrl": user.picture_url, "id": str(user.id), "bio": user.user_bio,
+                               "isPrivate": user.is_private}), 200
 
 
 def logout():
@@ -107,7 +109,7 @@ def upload():
 
 def send_mail(email, body, title):
     msg_title = title
-    sender="instagram@gmail.com"
+    sender = "instagram@gmail.com"
     msg = Message(msg_title, sender=sender, recipients=[email])
     msg.body = body
     current_app.extensions['mail'].send(msg)
@@ -130,7 +132,8 @@ def verify(data):
 
         return LoginScheme().dump({"access_token": access_token, "email": user.email,
                                    "username": user.username, "fullName": user.fullName,
-                                   "profileImageUrl": user.picture_url, "id": str(user.id), "bio": user.user_bio}), 200
+                                   "profileImageUrl": user.picture_url, "id": str(user.id), "bio": user.user_bio,
+                                   "isPrivate": user.is_private}), 200
     else:
         return jsonify(message="Invalid code"), 400
 
@@ -145,7 +148,7 @@ def get_tokens(user):
 
 def forgot_mail(data):
     user = db.session.execute(db.select(models.UserModel)
-                                .where(models.UserModel.email == data["email"])).scalar_one_or_none()
+                              .where(models.UserModel.email == data["email"])).scalar_one_or_none()
     if not user:
         abort(400, message="User not found.")
     random_number = random.randint(100000, 999999)
@@ -190,13 +193,21 @@ def get_user(user_id):
         abort(400, message="User not found.")
     return LoginScheme().dump({"access_token": "", "email": user.email,
                                "username": user.username, "fullName": user.fullName,
-                               "profileImageUrl": user.picture_url, "id": str(user.id)},), 200
+                               "profileImageUrl": user.picture_url, "id": str(user.id)}, ), 200
 
 
 def get_user_stats(user_id):
     user = db.session.execute(db.select(models.UserModel).where(models.UserModel.id == user_id)).scalar_one_or_none()
-    followers = db.session.execute(db.select(models.FollowingModel).where(models.FollowingModel.following_id == user_id)).scalars().all()
-    following = db.session.execute(db.select(models.FollowingModel).where(models.FollowingModel.user_id == user_id)).scalars().all()
+
+    followers = db.session.execute(db.select(models.FollowingModel)
+    .where(and_(
+        models.FollowingModel.following_id == user_id, models.FollowingModel.approved)
+    )).scalars().all()
+
+    following = db.session.execute(db.select(models.FollowingModel)
+                                   .where(
+        and_(models.FollowingModel.user_id == user_id, models.FollowingModel.approved))).scalars().all()
+
     if not user:
         abort(400, message="User not found.")
     return jsonify({
@@ -213,14 +224,17 @@ def update_user():
         abort(400, message="User not found.")
     file = request.files.get('file')
     username = request.form.get('username')
+    is_private = request.form.get('isPrivate')
     fullname = request.form.get('fullName')
     user_bio = request.form.get('userBio')
-    print(file)
+    print(file, request.form.get('isPrivate'))
+    user.is_private = is_private.lower() in ['true', '1', 't', 'y', 'yes']
     if (db.session.execute(db.select(models.UserModel).where(models.UserModel.username == username))
             .scalar_one_or_none()):
         abort(400, message="Username already exists.")
     if file is not None:
         try:
+            print("usao")
             result = cloudinary_upload(file)
             image_url = result['secure_url']
             user.picture_url = image_url
@@ -262,4 +276,5 @@ def google_login(data):
 
     return LoginScheme().dump({"access_token": access_token, "email": user.email,
                                "username": user.username, "fullName": user.fullName,
-                               "profileImageUrl": user.picture_url, "id": str(user.id), "bio": user.user_bio}), 200
+                               "profileImageUrl": user.picture_url, "id": str(user.id), "bio": user.user_bio,
+                               "isPrivate": user.is_private}), 200

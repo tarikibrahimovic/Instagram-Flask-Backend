@@ -12,6 +12,13 @@ from enums import NotificationType
 from events import user_sockets
 
 
+def get_socket(user_id):
+    for user_socket in user_sockets:
+        if user_socket["user_id"] == user_id:
+            return user_socket["socket"]
+    return None
+
+
 def get_comments(post_id):
     """Get all comments for a post"""
     post = db.session.execute(db.select(models.PostModel).where(models.PostModel.id == post_id)).scalar()
@@ -39,14 +46,16 @@ def create_comment(data):
         db.session.add(comment)
         db.session.add(notification)
         db.session.commit()
-        user_socket = user_sockets.get(post.user_id)
-        if user_socket:
+        user_socket = get_socket(post.user_id)
+        print(user_socket)
+        if user_socket is not None:
+            print("sending")
             data = {
-                "commentText": comment.comment,
+                "postId": str(post.id),
                 "uid": str(comment.user_id),
-                "postOwnerUid": str(post.user_id),
+                "type": NotificationType.COMMENT.value,
                 "username": comment.user.username,
-                "profileImageUrl": comment.user.picture_url,
+                "profileImageUrl": comment.user.picture_url or "",
                 "timestamp": str(format_date(comment.created_at))
             }
             user_socket.send(json.dumps(data))

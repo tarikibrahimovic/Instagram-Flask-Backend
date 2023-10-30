@@ -1,7 +1,7 @@
 import json
 
 from flask_jwt_extended import get_jwt_identity
-from sqlalchemy import and_
+from sqlalchemy import and_, select, join
 
 import models
 from flask import jsonify, request
@@ -31,17 +31,19 @@ def upload():
         db.session.commit()
     except Exception as e:
         abort(500, message=str(e))
-    # files = request.files.getlist('file')
-    # print(request.form.get('caption'))
-    # print(request.files.getlist('file'))
-    # print(request.files.get('file'))
-    # for file in files:
-    #     print(file)
     return jsonify({"message": "Post created."}), 201
 
 
 def get_all_posts():
-    posts = db.session.execute(db.select(models.PostModel).order_by(models.PostModel.created_at.desc())).scalars().all()
+    posts = db.session.execute(
+        select(models.PostModel)
+        .select_from(
+            join(models.PostModel, models.UserModel, models.PostModel.user_id == models.UserModel.id)
+        )
+        .where(models.UserModel.is_private == False)
+        .order_by(models.PostModel.created_at.desc())
+    ).scalars().all()
+
     return jsonify([{
         "ownerUid": post.user.id,
         "ownerUsername": post.user.username,
@@ -57,7 +59,9 @@ def get_all_posts():
 def get_following_posts():
     user_id = get_jwt_identity()['user_id']
     following_ids = db.session.execute(db.select(models.FollowingModel.following_id)
-                                       .where(models.FollowingModel.user_id == user_id)).scalars().all()
+                                       .where(and_(models.FollowingModel.user_id == user_id,
+                                                   models.FollowingModel.approved == True))).scalars().all()
+    print(following_ids)
     posts = (db.session.execute(
         db.select(models.PostModel)
         .where(models.PostModel.user_id.in_(following_ids))
@@ -76,11 +80,25 @@ def get_following_posts():
 
 
 def get_user_posts(uid):
-    posts = db.session.execute(
-        db.select(models.PostModel)
-        .where(models.PostModel.user_id == uid)
-        .order_by(models.PostModel.created_at.desc())
-    ).scalars().all()
+    user_id = get_jwt_identity()['user_id']
+    if user_id != uid:
+        following = db.session.execute(db.select(models.FollowingModel)
+                                       .where(and_(models.FollowingModel.user_id == user_id,
+                                                   models.FollowingModel.following_id == uid,
+                                                   models.FollowingModel.approved))).scalar_one_or_none()
+        if not following:
+            return jsonify([]), 200
+        posts = db.session.execute(
+            db.select(models.PostModel)
+            .where(models.PostModel.user_id == uid)
+            .order_by(models.PostModel.created_at.desc())
+        ).scalars().all()
+    else:
+        posts = db.session.execute(
+            db.select(models.PostModel)
+            .where(models.PostModel.user_id == uid)
+            .order_by(models.PostModel.created_at.desc())
+        ).scalars().all()
 
     return jsonify([{
         "ownerUid": post.user.id,

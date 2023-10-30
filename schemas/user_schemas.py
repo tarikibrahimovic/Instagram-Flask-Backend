@@ -10,6 +10,7 @@ class LoginScheme(Schema):
     id = fields.String(required=True)
     access_token = fields.String(dump_only=True)
     bio = fields.String(required=False)
+    isPrivate = fields.Boolean(required=False)
 
 
 class UserRequestSchema(PlainSchema):

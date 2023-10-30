@@ -11,3 +11,4 @@ class NotificationType(PyEnum):
     LIKE = 1
     FOLLOW = 2
     COMMENT = 3
+    APPROVE = 0
