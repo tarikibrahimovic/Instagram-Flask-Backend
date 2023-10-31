@@ -1,9 +1,9 @@
 from flask.views import MethodView
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_smorest import Blueprint
+from flask import jsonify
 from schemas import UserSchema, LoginScheme, VerifySchema, LoginUserSchema, ForgotPasswordRequestSchema, \
     ForgotPasswordSchema
-from flask import jsonify
 from functools import wraps
 
 from schemas.user_schemas import LoginGoogleSchema

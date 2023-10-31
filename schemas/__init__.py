@@ -4,3 +4,4 @@ from .user_schemas import (LoginScheme, UserRequestSchema, UserPatchSchema, Role
 from .follow_schemas import CheckFollowingSchema
 from .comment_schemas import CommentSchema
 from .notification_schemas import NotificationSchema
+from .message_schema import SendMessageSchema

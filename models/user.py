@@ -24,6 +24,9 @@ class UserModel(db.Model, BaseModelMixin, FunctionBaseMixin):
     user_comments = db.relationship('CommentModel', backref=db.backref('users', lazy=True), cascade="all, delete")
     followers = db.relationship('FollowingModel', backref='follower_users', foreign_keys='FollowingModel.user_id')
     following = db.relationship('FollowingModel', backref='following_users', foreign_keys='FollowingModel.following_id')
+    sender_messages = db.relationship('MessagesModel', backref='sender_users', foreign_keys='MessagesModel.sender_id')
+    receiver_messages = db.relationship('MessagesModel', backref='receiver_users', foreign_keys='MessagesModel.receiver_id')
+
     # user_likes = db.relationship('LikeModel', backref=db.backref('users', lazy=True), cascade="all, delete")
     # notifications = db.relationship('NotificationModel', backref=db.backref('users', lazy=True), cascade="all, delete")
 

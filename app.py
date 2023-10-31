@@ -13,8 +13,8 @@ from resources.follow import blp as follow_blp
 from resources.post import blp as post_blp
 from resources.comment import blp as comment_blp
 from resources.notification import blp as notification_blp
+from resources.messages import blp as messages_blp
 from events import user_sockets
-# from services.notification_service import get_user_notifications
 
 from dotenv import load_dotenv
 import os
@@ -92,6 +92,7 @@ def create_app():
     api.register_blueprint(post_blp)
     api.register_blueprint(comment_blp)
     api.register_blueprint(notification_blp)
+    api.register_blueprint(messages_blp)
 
     return app
 
