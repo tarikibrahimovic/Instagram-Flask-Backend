@@ -98,6 +98,7 @@ def create_app():
 
 
 if __name__ == "__main__":
+    # app = create_app()
     app = create_app()
     # app.run(debug=True)
 
@@ -111,9 +112,18 @@ def echo(sock, user_id):
             for user_socket in user_sockets:
                 if user_socket["user_id"] == user_id:
                     user_socket["socket"] = sock
-        print(user_id, user_sockets)
+        print("Na ulazu socketi su:", user_sockets)
         data = sock.receive()
         sock.send("Hello, " + data)
+
+
+@sock.route('/close/<int:user_id>')
+def close(sock, user_id):
+    for user_socket in user_sockets:
+        if user_socket["user_id"] == user_id:
+            user_sockets.remove(user_socket)
+            break
+    sock.close()
 
 
 cloudinary.config(

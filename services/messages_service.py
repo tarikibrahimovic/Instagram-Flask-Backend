@@ -8,9 +8,7 @@ from db import db
 from os import abort
 from sqlalchemy import union
 
-from schemas import SendMessageSchema
 from services.post_service import get_socket
-from services.comment_service import format_date
 
 
 def send_message(data):
@@ -29,6 +27,7 @@ def send_message(data):
     message.save_to_db()
     socket = get_socket(receiver_id)
     if socket is not None:
+        print(f"Salje se useru {receiver_id}, sa socketom {socket}")
         data = {
             "message": message.message,
             "receiver_id": str(message.receiver_id),
@@ -57,7 +56,6 @@ def get_messages(receiver_id):
 
     all_messages = all_messages_from_user + all_messages_to_user
     all_messages.sort(key=lambda x: x.created_at)
-
     return jsonify([{
         "message": message.message,
         "receiver_id": str(message.receiver_id),

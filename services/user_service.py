@@ -68,14 +68,14 @@ def login(data):
                                "isPrivate": user.is_private}), 200
 
 
-def logout():
-    token = get_jwt()
-    jti = token["jti"]
-    ttype = token["type"]
-    now = datetime.utcnow()
-    db.session.add(TokenBlocklist(jti=jti, type=ttype, created_at=now))
-    db.session.commit()
-    return jsonify(msg=f"{ttype.capitalize()} token successfully revoked")
+# def logout():
+#     token = get_jwt()
+#     jti = token["jti"]
+#     ttype = token["type"]
+#     now = datetime.utcnow()
+#     db.session.add(TokenBlocklist(jti=jti, type=ttype, created_at=now))
+#     db.session.commit()
+#     return jsonify(msg=f"{ttype.capitalize()} token successfully revoked")
 
 
 def change_password():
@@ -278,3 +278,26 @@ def google_login(data):
                                "username": user.username, "fullName": user.fullName,
                                "profileImageUrl": user.picture_url, "id": str(user.id), "bio": user.user_bio,
                                "isPrivate": user.is_private}), 200
+
+
+from events import user_sockets
+
+
+def get_socket(user_id):
+    for user_socket in user_sockets:
+        if user_socket["user_id"] == user_id:
+            return user_socket["socket"]
+    return None
+
+
+def logout():
+    user_id = get_jwt_identity()['user_id']
+
+    user_socket = get_socket(user_id)
+    print("Print za logout: ", user_socket)
+    if user_socket is not None:
+        user_sockets.remove({"user_id": user_id, "socket": user_socket})
+
+    print("Svi socketi nakon logouta: ", user_sockets)
+    return jsonify(message="Logged out successfully"), 200
+

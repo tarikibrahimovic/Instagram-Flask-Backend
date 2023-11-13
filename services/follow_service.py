@@ -63,7 +63,6 @@ def follow(followed_id):
 def check_following(following_id):
     user_id = get_jwt_identity()['user_id']
     if user_id == following_id:
-        print("FOLLOW")
         return CheckFollowingSchema().dump({"is_following": "FOLLOW"}), 200
     existing_following = (db.session.execute(db.select(models.FollowingModel)
                                              .where(and_(models.FollowingModel.user_id == user_id,
@@ -91,7 +90,6 @@ def approve(following_id):
                                                        models.NotificationModel.followed_id == user_id,
                                                        models.NotificationModel.type == NotificationType.APPROVE)))
                         .scalar_one_or_none())
-        print(notification)
         notification.type = NotificationType.FOLLOW
         db.session.commit()
         return {"is_approved": True}, 200

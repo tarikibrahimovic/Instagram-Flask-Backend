@@ -49,7 +49,6 @@ def create_comment(data):
         user_socket = get_socket(post.user_id)
         print(user_socket)
         if user_socket is not None:
-            print("sending")
             data = {
                 "postId": str(post.id),
                 "uid": str(comment.user_id),

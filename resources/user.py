@@ -103,3 +103,9 @@ def update_user():
 @blp.arguments(LoginGoogleSchema)
 def google_login(data):
     return user_service.google_login(data)
+
+
+@blp.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    return user_service.logout()

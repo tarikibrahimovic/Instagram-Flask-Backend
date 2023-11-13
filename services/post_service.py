@@ -61,7 +61,6 @@ def get_following_posts():
     following_ids = db.session.execute(db.select(models.FollowingModel.following_id)
                                        .where(and_(models.FollowingModel.user_id == user_id,
                                                    models.FollowingModel.approved == True))).scalars().all()
-    print(following_ids)
     posts = (db.session.execute(
         db.select(models.PostModel)
         .where(models.PostModel.user_id.in_(following_ids))
